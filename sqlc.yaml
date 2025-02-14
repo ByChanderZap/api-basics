@@ -1,8 +1,30 @@
+# version: "2"
+# sql:
+#   - schema: "cmd/migrate/migrations"
+#     queries: "cmd/queries"
+#     engine: "postgresql"
+#     gen:
+#       go:
+#         out: "cmd/database"
 version: "2"
 sql:
-  - schema: "cmd/migrate/migrations"
-    queries: "cmd/queries"
+  - &default
+    name: "user"
+    schema: "cmd/migrate/migrations"
+    queries: "services/user/users"
     engine: "postgresql"
     gen:
-      go:
-        out: "cmd/database"
+      go: &go_defaults
+        package: "user"
+        out: "services/user"
+        emit_json_tags: true
+  - &default 
+    name: "order"
+    schema: "cmd/migrate/migrations"
+    queries: "services/order/orders"
+    engine: "postgresql"
+    gen:
+      go: &go_defaults
+        package: "order"
+        out: "services/order"
+        emit_json_tags: true
