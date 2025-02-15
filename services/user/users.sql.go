@@ -3,7 +3,7 @@
 //   sqlc v1.28.0
 // source: users.sql
 
-package database
+package user
 
 import (
 	"context"
@@ -13,47 +13,47 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, firstName, lastName, email, password, createdAt, updatedAt) 
+INSERT INTO users (id, first_name, last_name, email, password, created_at, updated_at) 
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, firstname, lastname, email, password, createdat, updatedat, deletedat
+RETURNING id, first_name, last_name, email, password, created_at, updated_at, deleted_at
 `
 
 type CreateUserParams struct {
-	ID        uuid.UUID
-	Firstname string
-	Lastname  string
-	Email     string
-	Password  string
-	Createdat time.Time
-	Updatedat time.Time
+	ID        uuid.UUID `json:"id"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
 		arg.ID,
-		arg.Firstname,
-		arg.Lastname,
+		arg.FirstName,
+		arg.LastName,
 		arg.Email,
 		arg.Password,
-		arg.Createdat,
-		arg.Updatedat,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Firstname,
-		&i.Lastname,
+		&i.FirstName,
+		&i.LastName,
 		&i.Email,
 		&i.Password,
-		&i.Createdat,
-		&i.Updatedat,
-		&i.Deletedat,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, firstname, lastname, email, password, createdat, updatedat, deletedat
+SELECT id, first_name, last_name, email, password, created_at, updated_at, deleted_at
 FROM users 
 WHERE email = $1
 `
@@ -63,19 +63,19 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Firstname,
-		&i.Lastname,
+		&i.FirstName,
+		&i.LastName,
 		&i.Email,
 		&i.Password,
-		&i.Createdat,
-		&i.Updatedat,
-		&i.Deletedat,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT id, firstname, lastname, email, password, createdat, updatedat, deletedat
+SELECT id, first_name, last_name, email, password, created_at, updated_at, deleted_at
 FROM users 
 WHERE id = $1
 `
@@ -85,13 +85,13 @@ func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Firstname,
-		&i.Lastname,
+		&i.FirstName,
+		&i.LastName,
 		&i.Email,
 		&i.Password,
-		&i.Createdat,
-		&i.Updatedat,
-		&i.Deletedat,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }

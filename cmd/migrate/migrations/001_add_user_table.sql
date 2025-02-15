@@ -1,14 +1,14 @@
 -- +goose Up
 CREATE TABLE IF NOT EXISTS users (
-  id            UUID PRIMARY KEY,
-  firstName     TEXT NOT NULL,
-  lastName      TEXT NOT NULL,
-  email         TEXT UNIQUE NOT NULL,
-  password      TEXT NOT NULL,
+  id              UUID PRIMARY KEY,
+  first_name      TEXT NOT NULL,
+  last_name       TEXT NOT NULL,
+  email           TEXT UNIQUE NOT NULL,
+  password        TEXT NOT NULL,
   
-  createdAt     TIMESTAMP NOT NULL,
-  updatedAt     TIMESTAMP NOT NULL,
-  deletedAt     TIMESTAMP
+  created_at      TIMESTAMP NOT NULL,
+  updated_at      TIMESTAMP NOT NULL,
+  deleted_at      TIMESTAMP
 );
 --
 

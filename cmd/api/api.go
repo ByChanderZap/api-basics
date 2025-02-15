@@ -1,20 +1,20 @@
 package api
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 
-	"github.com/ByChanderZap/api-basics/cmd/database"
 	"github.com/ByChanderZap/api-basics/services/user"
 	"github.com/go-chi/chi/v5"
 )
 
 type APIServer struct {
 	addr string
-	db   *database.Queries
+	db   *sql.DB
 }
 
-func NewAPIServer(addr string, db *database.Queries) *APIServer {
+func NewAPIServer(addr string, db *sql.DB) *APIServer {
 	return &APIServer{
 		addr: addr,
 		db:   db,
@@ -26,7 +26,8 @@ func (s *APIServer) Run() error {
 	v1Router := chi.NewRouter()
 
 	//	Getting userRoutes
-	userHandler := user.NewHandler()
+	userStore := user.New(s.db)
+	userHandler := user.NewHandler(userStore)
 	userHandler.RegisterRoutes(v1Router)
 
 	// Mounting userRoutes v1Router to /api/v1

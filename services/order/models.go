@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.28.0
 
-package database
+package order
 
 import (
 	"database/sql"
@@ -34,8 +34,8 @@ func (e *OrderStatus) Scan(src interface{}) error {
 }
 
 type NullOrderStatus struct {
-	OrderStatus OrderStatus
-	Valid       bool // Valid is true if OrderStatus is not NULL
+	OrderStatus OrderStatus `json:"order_status"`
+	Valid       bool        `json:"valid"` // Valid is true if OrderStatus is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -57,43 +57,20 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 }
 
 type Order struct {
-	ID        uuid.UUID
-	Userid    uuid.UUID
-	Total     string
-	Status    OrderStatus
-	Address   string
-	Createdat time.Time
-	Updatedat time.Time
-	Deletedat sql.NullTime
+	ID        uuid.UUID    `json:"id"`
+	UserID    uuid.UUID    `json:"user_id"`
+	Total     string       `json:"total"`
+	Status    OrderStatus  `json:"status"`
+	Address   string       `json:"address"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
 type OrderItem struct {
-	ID        uuid.UUID
-	Orderid   uuid.UUID
-	Productid uuid.UUID
-	Quantity  int32
-	Price     string
-}
-
-type Product struct {
-	ID          uuid.UUID
-	Name        string
-	Description string
-	Image       string
-	Price       string
-	Quantity    int32
-	Createdat   time.Time
-	Updatedat   time.Time
-	Deletedat   sql.NullTime
-}
-
-type User struct {
-	ID        uuid.UUID
-	Firstname string
-	Lastname  string
-	Email     string
-	Password  string
-	Createdat time.Time
-	Updatedat time.Time
-	Deletedat sql.NullTime
+	ID        uuid.UUID `json:"id"`
+	OrderID   uuid.UUID `json:"order_id"`
+	ProductID uuid.UUID `json:"product_id"`
+	Quantity  int32     `json:"quantity"`
+	Price     string    `json:"price"`
 }

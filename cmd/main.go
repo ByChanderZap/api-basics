@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 
@@ -15,8 +16,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	server := api.NewAPIServer(":3000", db)
+
+	initStorage(db)
+
+	server := api.NewAPIServer(config.Envs.Port, db)
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func initStorage(db *sql.DB) {
+	err := db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("DB: Connected")
 }
