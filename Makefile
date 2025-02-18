@@ -9,3 +9,6 @@ migrate-up:
 
 migrate-down:
 	@goose -dir cmd/migrate/migrations postgres "postgres://alex:password@localhost:5432/mydatabase" down
+
+test:
+	@go test -v ./...
