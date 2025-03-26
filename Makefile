@@ -12,3 +12,6 @@ migrate-down:
 
 test:
 	@go test -v ./...
+
+dev:
+	@air

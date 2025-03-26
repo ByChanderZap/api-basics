@@ -6,7 +6,10 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-playground/locales/en"
+	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+	en_translations "github.com/go-playground/validator/v10/translations/en"
 )
 
 func ParseJson(r *http.Request, payload any) error {
@@ -22,10 +25,6 @@ func WriteJSON(w http.ResponseWriter, status int, v interface{}) error {
 
 	return json.NewEncoder(w).Encode(v)
 }
-
-// func WriteError(w http.ResponseWriter, status int, err error) {
-// 	WriteJSON(w, status, map[string]string{"error": err.Error()})
-// }
 
 func RespondWithError(w http.ResponseWriter, code int, err error) {
 	if code > 499 {
@@ -53,4 +52,14 @@ func RespondWithError(w http.ResponseWriter, code int, err error) {
 // 	w.Write(data)
 // }
 
-var Validate = validator.New()
+var (
+	Validate   = validator.New()
+	Translator ut.Translator
+)
+
+func InitValidator() {
+	eng := en.New()
+	uni := ut.New(eng, eng)
+	Translator, _ = uni.GetTranslator("en")
+	_ = en_translations.RegisterDefaultTranslations(Validate, Translator)
+}

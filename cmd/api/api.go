@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ByChanderZap/api-basics/services/user"
+	"github.com/ByChanderZap/api-basics/utils"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -22,6 +23,7 @@ func NewAPIServer(addr string, db *sql.DB) *APIServer {
 }
 
 func (s *APIServer) Run() error {
+	utils.InitValidator()
 	router := chi.NewRouter()
 	v1Router := chi.NewRouter()
 

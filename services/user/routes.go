@@ -33,6 +33,12 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var payload types.RegisterUserPayload
+	/*
+		TODO:
+		I need to find a way to handle the errors on the unmarshall, i dont like to respond on the api with messages like:
+		    "error": "json: cannot unmarshal number into Go struct field RegisterUserPayload.password of type string"
+
+	*/
 	if err := utils.ParseJson(r, &payload); err != nil {
 		utils.RespondWithError(w, http.StatusBadRequest, err)
 		return
@@ -40,7 +46,14 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	if err := utils.Validate.Struct(payload); err != nil {
 		errors := err.(validator.ValidationErrors)
-		utils.RespondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid payload %v", errors))
+		errorMessages := make(map[string]string)
+		for _, e := range errors {
+			errorMessages[e.Field()] = e.Translate(utils.Translator)
+		}
+		utils.WriteJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"error":  "invalid payload",
+			"fields": errorMessages,
+		})
 		return
 	}
 
