@@ -36,3 +36,6 @@ sql:
         json_tags_case_style: "snake"
         omit_unused_structs: true
         emit_interface: true
+        overrides:
+          - db_type: "pg_catalog.numeric"
+            go_type: "float64"

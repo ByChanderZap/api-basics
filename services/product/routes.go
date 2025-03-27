@@ -2,8 +2,10 @@ package product
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/ByChanderZap/api-basics/types"
 	"github.com/ByChanderZap/api-basics/utils"
@@ -57,7 +59,30 @@ func (h *Handler) handleCreateProduct(w http.ResponseWriter, r *http.Request) {
 		Description: payload.Description,
 		Image:       img,
 		Price:       payload.Price,
+		Quantity:    int32(payload.Quantity),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	})
+
+	if err != nil {
+		log.Println("Error creating Product", err)
+		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Errorf("unable to create product %v", err))
+		return
+	}
+
+	response := map[string]interface{}{
+		"id":          p.ID,
+		"name":        p.Name,
+		"description": p.Description,
+		"image":       utils.NullableString(p.Image),
+		"price":       p.Price,
+		"quantity":    p.Quantity,
+		"created_at":  p.CreatedAt,
+		"updated_at":  p.UpdatedAt,
+		"deleted_at":  utils.NullableTime(p.DeletedAt),
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, response)
 }
 
 func (h *Handler) handleGetProducts(w http.ResponseWriter, r *http.Request) {
