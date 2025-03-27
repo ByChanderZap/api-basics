@@ -2,10 +2,14 @@ package user
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/ByChanderZap/api-basics/config"
 	"github.com/ByChanderZap/api-basics/services/auth"
 	"github.com/ByChanderZap/api-basics/types"
 	"github.com/ByChanderZap/api-basics/utils"
@@ -28,6 +32,53 @@ func (h *Handler) RegisterRoutes(router *chi.Mux) {
 }
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
+	var payload types.LoginUserPayload
+	if err := utils.ParseJson(r, &payload); err != nil {
+		utils.RespondWithError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := utils.Validate.Struct(payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		errorMessages := make(map[string]string)
+		for _, e := range errors {
+			errorMessages[e.Field()] = e.Translate(utils.Translator)
+		}
+		utils.WriteJSON(w, http.StatusBadRequest, map[string]interface{}{
+			"error":  "invalid payload",
+			"fields": errorMessages,
+		})
+		return
+	}
+
+	u, err := h.store.GetUserByEmail(r.Context(), payload.Email)
+	if err != nil {
+		if strings.Contains(err.Error(), "no rows in result set") {
+			log.Println("Email not found")
+			utils.RespondWithError(w, http.StatusBadRequest, errors.New("invalid email or password"))
+			return
+		}
+		utils.RespondWithError(w, http.StatusBadRequest, fmt.Errorf("user with email %s not found", payload.Email))
+		return
+	}
+
+	if err := auth.ComparePassword(u.Password, payload.Password); err != nil {
+		log.Println("Password does not match")
+		utils.RespondWithError(w, http.StatusBadRequest, errors.New("invalid email or password"))
+		return
+	}
+
+	token, err := auth.CreateJWT(config.Envs.JWTSecret, u.ID.String())
+	if err != nil {
+		log.Println("Error creating token")
+		utils.RespondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
+		"message": "login successful",
+		"token":   token,
+	})
 
 }
 

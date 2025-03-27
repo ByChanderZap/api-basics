@@ -24,3 +24,15 @@ sql:
         json_tags_case_style: "snake"
         omit_unused_structs: true
         emit_interface: true
+  - name: "product"
+    schema: "cmd/migrate/migrations"
+    queries: "services/product/products.sql"
+    engine: "postgresql"
+    gen:
+      go:
+        package: "product"
+        out: "services/product"
+        emit_json_tags: true
+        json_tags_case_style: "snake"
+        omit_unused_structs: true
+        emit_interface: true

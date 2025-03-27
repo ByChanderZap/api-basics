@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ByChanderZap/api-basics/services/product"
 	"github.com/ByChanderZap/api-basics/services/user"
 	"github.com/ByChanderZap/api-basics/utils"
 	"github.com/go-chi/chi/v5"
@@ -32,7 +33,12 @@ func (s *APIServer) Run() error {
 	userHandler := user.NewHandler(userStore)
 	userHandler.RegisterRoutes(v1Router)
 
-	// Mounting userRoutes v1Router to /api/v1
+	//	Getting productRoutes
+	productStore := product.New(s.db)
+	productHandler := product.NewHandler(productStore)
+	productHandler.RegisterRoutes(v1Router)
+
+	//	Mounting userRoutes v1Router to /api/v1
 	router.Mount("/api/v1", v1Router)
 
 	log.Println("Listening on", s.addr)
