@@ -56,6 +56,37 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	return i, err
 }
 
+const deleteProduct = `-- name: DeleteProduct :one
+UPDATE products
+set deleted_at = $2,
+    updated_at = $3
+WHERE id = $1
+RETURNING id, name, description, image, price, quantity, created_at, updated_at, deleted_at
+`
+
+type DeleteProductParams struct {
+	ID        uuid.UUID    `json:"id"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+}
+
+func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) (Product, error) {
+	row := q.db.QueryRowContext(ctx, deleteProduct, arg.ID, arg.DeletedAt, arg.UpdatedAt)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Image,
+		&i.Price,
+		&i.Quantity,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const getProducts = `-- name: GetProducts :many
 SELECT id, name, description, image, price, quantity, created_at, updated_at, deleted_at FROM products
 `
@@ -91,4 +122,51 @@ func (q *Queries) GetProducts(ctx context.Context) ([]Product, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateProduct = `-- name: UpdateProduct :one
+UPDATE products
+SET name = $2,
+    description = $3,
+    image = $4,
+    price = $5,
+    quantity = $6,
+    updated_at = $7
+WHERE id = $1
+RETURNING id, name, description, image, price, quantity, created_at, updated_at, deleted_at
+`
+
+type UpdateProductParams struct {
+	ID          uuid.UUID      `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Image       sql.NullString `json:"image"`
+	Price       float64        `json:"price"`
+	Quantity    int32          `json:"quantity"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
+	row := q.db.QueryRowContext(ctx, updateProduct,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.Image,
+		arg.Price,
+		arg.Quantity,
+		arg.UpdatedAt,
+	)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Image,
+		&i.Price,
+		&i.Quantity,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
 }
