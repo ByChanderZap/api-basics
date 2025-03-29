@@ -1,5 +1,14 @@
 -- name: GetProducts :many
-SELECT * FROM products;
+SELECT * 
+FROM products
+WHERE deleted_at IS NULL
+ORDER BY created_at DESC;
+
+-- name: GetProduct :one
+SELECT *
+FROM products
+WHERE id = $1
+AND deleted_at IS NULL;
 
 -- name: CreateProduct :one
 INSERT INTO products (id, name, description, image, price, quantity, created_at, updated_at)

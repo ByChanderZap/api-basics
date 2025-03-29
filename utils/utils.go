@@ -6,10 +6,12 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
+	"github.com/google/uuid"
 )
 
 func ParseJson(r *http.Request, payload any) error {
@@ -62,4 +64,13 @@ func InitValidator() {
 	uni := ut.New(eng, eng)
 	Translator, _ = uni.GetTranslator("en")
 	_ = en_translations.RegisterDefaultTranslations(Validate, Translator)
+}
+
+func ParseUUIDParam(r *http.Request, param string) (uuid.UUID, error) {
+	pId := chi.URLParam(r, param)
+	parsedId, err := uuid.Parse(pId)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid %s id", param)
+	}
+	return parsedId, nil
 }

@@ -87,8 +87,35 @@ func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) (P
 	return i, err
 }
 
+const getProduct = `-- name: GetProduct :one
+SELECT id, name, description, image, price, quantity, created_at, updated_at, deleted_at
+FROM products
+WHERE id = $1
+AND deleted_at IS NULL
+`
+
+func (q *Queries) GetProduct(ctx context.Context, id uuid.UUID) (Product, error) {
+	row := q.db.QueryRowContext(ctx, getProduct, id)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Image,
+		&i.Price,
+		&i.Quantity,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const getProducts = `-- name: GetProducts :many
-SELECT id, name, description, image, price, quantity, created_at, updated_at, deleted_at FROM products
+SELECT id, name, description, image, price, quantity, created_at, updated_at, deleted_at 
+FROM products
+WHERE deleted_at IS NULL
+ORDER BY created_at DESC
 `
 
 func (q *Queries) GetProducts(ctx context.Context) ([]Product, error) {

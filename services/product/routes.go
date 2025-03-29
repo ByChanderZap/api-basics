@@ -29,6 +29,37 @@ func (h *Handler) RegisterRoutes(router *chi.Mux) {
 	router.Post("/products", h.handleCreateProduct)
 	router.Put("/products/{id}", h.handleUpdateProduct)
 	router.Delete("/products/{id}", h.handleDeleteProduct)
+	router.Get("/products/{id}", h.handleGetProductById)
+}
+
+func (h *Handler) handleGetProductById(w http.ResponseWriter, r *http.Request) {
+	parsedId, err := utils.ParseUUIDParam(r, "id")
+	if err != nil {
+		log.Println("error parsing product id", err)
+		utils.RespondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid product id"))
+		return
+	}
+	p, err := h.store.GetProduct(r.Context(), parsedId)
+	if err != nil {
+		log.Println("error getting product", err)
+		if strings.Contains(err.Error(), "no rows in result set") {
+			utils.RespondWithError(w, http.StatusNotFound, fmt.Errorf("product with id %s not found", parsedId))
+			return
+		}
+		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Errorf("unable to get product"))
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, types.ProductResponse{
+		ID:          p.ID.String(),
+		Name:        p.Name,
+		Description: p.Description,
+		Image:       utils.NullableString(p.Image),
+		Price:       p.Price,
+		Quantity:    p.Quantity,
+		CreatedAt:   p.CreatedAt,
+		UpdatedAt:   p.UpdatedAt,
+		DeletedAt:   utils.NullableTime(p.DeletedAt),
+	})
 }
 
 func (h *Handler) handleCreateProduct(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +78,7 @@ func (h *Handler) handleCreateProduct(w http.ResponseWriter, r *http.Request) {
 		}
 
 		utils.WriteJSON(w, http.StatusBadRequest, map[string]interface{}{
-			"error":  "invalid payload",
+			"error":  "validation failed",
 			"fields": errorMessages,
 		})
 		return
@@ -96,21 +127,30 @@ func (h *Handler) handleGetProducts(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if p == nil {
-		utils.WriteJSON(w, http.StatusOK, []interface{}{})
-		return
+
+	var response []types.ProductResponse
+	for _, prod := range p {
+		response = append(response, types.ProductResponse{
+			ID:          prod.ID.String(),
+			Name:        prod.Name,
+			Description: prod.Description,
+			Image:       utils.NullableString(prod.Image),
+			Price:       prod.Price,
+			Quantity:    prod.Quantity,
+			CreatedAt:   prod.CreatedAt,
+			UpdatedAt:   prod.UpdatedAt,
+			DeletedAt:   utils.NullableTime(prod.DeletedAt),
+		})
 	}
-	utils.WriteJSON(w, http.StatusOK, p)
+
+	utils.WriteJSON(w, http.StatusOK, response)
 }
 
 func (h *Handler) handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
-	pId := chi.URLParam(r, "id")
-	parsedId, err := uuid.Parse(pId)
-
+	parsedId, err := utils.ParseUUIDParam(r, "id")
 	if err != nil {
-		log.Println("Error parsing product id", err)
+		log.Println("error parsing product id", err)
 		utils.RespondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid product id"))
-		return
 	}
 
 	var payload types.UpdateProductPayload
@@ -151,7 +191,7 @@ func (h *Handler) handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error updating product", err)
 		if strings.Contains(err.Error(), "no rows in result set") {
-			utils.RespondWithError(w, http.StatusNotFound, fmt.Errorf("Product with id %s not found", pId))
+			utils.RespondWithError(w, http.StatusNotFound, fmt.Errorf("Product with id %s not found", parsedId))
 			return
 		}
 		utils.RespondWithError(w, http.StatusInternalServerError, errors.New("unable to update product"))
@@ -177,15 +217,11 @@ func (h *Handler) handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
-	pId := chi.URLParam(r, "id")
-	parsedId, err := uuid.Parse(pId)
-
+	parsedId, err := utils.ParseUUIDParam(r, "id")
 	if err != nil {
-		log.Println("Error parsing product id", err)
+		log.Println("error parsing product id", err)
 		utils.RespondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid product id"))
-		return
 	}
-
 	_, err = h.store.DeleteProduct(r.Context(), DeleteProductParams{
 		ID:        parsedId,
 		DeletedAt: sql.NullTime{Time: time.Now(), Valid: true},
@@ -195,13 +231,13 @@ func (h *Handler) handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error deleting product", err)
 		if strings.Contains(err.Error(), "no rows in result set") {
-			utils.RespondWithError(w, http.StatusNotFound, fmt.Errorf("Product with id %s not found", pId))
+			utils.RespondWithError(w, http.StatusNotFound, fmt.Errorf("Product with id %s not found", parsedId))
 			return
 		}
 		utils.RespondWithError(w, http.StatusInternalServerError, errors.New("unable to delete product"))
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"message": "product with id " + pId + " deleted",
+		"message": "product with id " + parsedId.String() + " deleted",
 	})
 }
