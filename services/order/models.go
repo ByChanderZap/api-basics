@@ -5,12 +5,12 @@
 package order
 
 import (
-	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type OrderStatus string
@@ -57,14 +57,14 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 }
 
 type Order struct {
-	ID        uuid.UUID    `json:"id"`
-	UserID    uuid.UUID    `json:"user_id"`
-	Total     string       `json:"total"`
-	Status    OrderStatus  `json:"status"`
-	Address   string       `json:"address"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt time.Time    `json:"updated_at"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
+	ID        uuid.UUID        `json:"id"`
+	UserID    uuid.UUID        `json:"user_id"`
+	Total     float64          `json:"total"`
+	Status    OrderStatus      `json:"status"`
+	Address   string           `json:"address"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
+	DeletedAt pgtype.Timestamp `json:"deleted_at"`
 }
 
 type OrderItem struct {
@@ -72,5 +72,5 @@ type OrderItem struct {
 	OrderID   uuid.UUID `json:"order_id"`
 	ProductID uuid.UUID `json:"product_id"`
 	Quantity  int32     `json:"quantity"`
-	Price     string    `json:"price"`
+	Price     float64   `json:"price"`
 }

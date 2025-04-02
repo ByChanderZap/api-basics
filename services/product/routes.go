@@ -49,17 +49,7 @@ func (h *Handler) handleGetProductById(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Errorf("unable to get product"))
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, types.ProductResponse{
-		ID:          p.ID.String(),
-		Name:        p.Name,
-		Description: p.Description,
-		Image:       utils.NullableString(p.Image),
-		Price:       p.Price,
-		Quantity:    p.Quantity,
-		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
-		DeletedAt:   utils.NullableTime(p.DeletedAt),
-	})
+	utils.WriteJSON(w, http.StatusOK, p)
 }
 
 func (h *Handler) handleCreateProduct(w http.ResponseWriter, r *http.Request) {

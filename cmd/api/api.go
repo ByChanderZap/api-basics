@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 
@@ -9,14 +8,15 @@ import (
 	"github.com/ByChanderZap/api-basics/services/user"
 	"github.com/ByChanderZap/api-basics/utils"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type APIServer struct {
 	addr string
-	db   *sql.DB
+	db   *pgxpool.Pool
 }
 
-func NewAPIServer(addr string, db *sql.DB) *APIServer {
+func NewAPIServer(addr string, db *pgxpool.Pool) *APIServer {
 	return &APIServer{
 		addr: addr,
 		db:   db,

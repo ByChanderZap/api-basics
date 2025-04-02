@@ -7,10 +7,10 @@ package order
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createOrder = `-- name: CreateOrder :one
@@ -20,18 +20,18 @@ RETURNING id, user_id, total, status, address, created_at, updated_at, deleted_a
 `
 
 type CreateOrderParams struct {
-	ID        uuid.UUID    `json:"id"`
-	UserID    uuid.UUID    `json:"user_id"`
-	Total     string       `json:"total"`
-	Status    OrderStatus  `json:"status"`
-	Address   string       `json:"address"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt time.Time    `json:"updated_at"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
+	ID        uuid.UUID        `json:"id"`
+	UserID    uuid.UUID        `json:"user_id"`
+	Total     float64          `json:"total"`
+	Status    OrderStatus      `json:"status"`
+	Address   string           `json:"address"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
+	DeletedAt pgtype.Timestamp `json:"deleted_at"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
-	row := q.db.QueryRowContext(ctx, createOrder,
+	row := q.db.QueryRow(ctx, createOrder,
 		arg.ID,
 		arg.UserID,
 		arg.Total,
@@ -66,11 +66,11 @@ type CreateOrderItemParams struct {
 	OrderID   uuid.UUID `json:"order_id"`
 	ProductID uuid.UUID `json:"product_id"`
 	Quantity  int32     `json:"quantity"`
-	Price     string    `json:"price"`
+	Price     float64   `json:"price"`
 }
 
 func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error) {
-	row := q.db.QueryRowContext(ctx, createOrderItem,
+	row := q.db.QueryRow(ctx, createOrderItem,
 		arg.ID,
 		arg.OrderID,
 		arg.ProductID,

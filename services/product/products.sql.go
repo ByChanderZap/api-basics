@@ -7,10 +7,10 @@ package product
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createProduct = `-- name: CreateProduct :one
@@ -20,18 +20,18 @@ RETURNING id, name, description, image, price, quantity, created_at, updated_at,
 `
 
 type CreateProductParams struct {
-	ID          uuid.UUID      `json:"id"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Image       sql.NullString `json:"image"`
-	Price       float64        `json:"price"`
-	Quantity    int32          `json:"quantity"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Image       *string   `json:"image"`
+	Price       float64   `json:"price"`
+	Quantity    int32     `json:"quantity"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
-	row := q.db.QueryRowContext(ctx, createProduct,
+	row := q.db.QueryRow(ctx, createProduct,
 		arg.ID,
 		arg.Name,
 		arg.Description,
@@ -65,13 +65,13 @@ RETURNING id, name, description, image, price, quantity, created_at, updated_at,
 `
 
 type DeleteProductParams struct {
-	ID        uuid.UUID    `json:"id"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
-	UpdatedAt time.Time    `json:"updated_at"`
+	ID        uuid.UUID        `json:"id"`
+	DeletedAt pgtype.Timestamp `json:"deleted_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
 }
 
 func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) (Product, error) {
-	row := q.db.QueryRowContext(ctx, deleteProduct, arg.ID, arg.DeletedAt, arg.UpdatedAt)
+	row := q.db.QueryRow(ctx, deleteProduct, arg.ID, arg.DeletedAt, arg.UpdatedAt)
 	var i Product
 	err := row.Scan(
 		&i.ID,
@@ -95,7 +95,7 @@ AND deleted_at IS NULL
 `
 
 func (q *Queries) GetProduct(ctx context.Context, id uuid.UUID) (Product, error) {
-	row := q.db.QueryRowContext(ctx, getProduct, id)
+	row := q.db.QueryRow(ctx, getProduct, id)
 	var i Product
 	err := row.Scan(
 		&i.ID,
@@ -119,7 +119,7 @@ ORDER BY created_at DESC
 `
 
 func (q *Queries) GetProducts(ctx context.Context) ([]Product, error) {
-	rows, err := q.db.QueryContext(ctx, getProducts)
+	rows, err := q.db.Query(ctx, getProducts)
 	if err != nil {
 		return nil, err
 	}
@@ -142,9 +142,6 @@ func (q *Queries) GetProducts(ctx context.Context) ([]Product, error) {
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -164,17 +161,17 @@ RETURNING id, name, description, image, price, quantity, created_at, updated_at,
 `
 
 type UpdateProductParams struct {
-	ID          uuid.UUID      `json:"id"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Image       sql.NullString `json:"image"`
-	Price       float64        `json:"price"`
-	Quantity    int32          `json:"quantity"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Image       *string   `json:"image"`
+	Price       float64   `json:"price"`
+	Quantity    int32     `json:"quantity"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
-	row := q.db.QueryRowContext(ctx, updateProduct,
+	row := q.db.QueryRow(ctx, updateProduct,
 		arg.ID,
 		arg.Name,
 		arg.Description,

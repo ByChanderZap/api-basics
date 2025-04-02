@@ -1,13 +1,14 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"log"
 
 	"github.com/ByChanderZap/api-basics/cmd/api"
 	"github.com/ByChanderZap/api-basics/config"
 	"github.com/ByChanderZap/api-basics/db"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
@@ -25,8 +26,8 @@ func main() {
 	}
 }
 
-func initStorage(db *sql.DB) {
-	err := db.Ping()
+func initStorage(db *pgxpool.Pool) {
+	err := db.Ping(context.Background())
 	if err != nil {
 		log.Fatal(err)
 	}
