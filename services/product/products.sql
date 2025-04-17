@@ -1,11 +1,11 @@
 -- name: GetProducts :many
-SELECT * 
+SELECT id, name, description, image, price, quantity, created_at, updated_at
 FROM products
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC;
 
 -- name: GetProduct :one
-SELECT *
+SELECT id, name, description, image, price, quantity, created_at, updated_at
 FROM products
 WHERE id = $1
 AND deleted_at IS NULL;
@@ -26,9 +26,8 @@ SET name = $2,
 WHERE id = $1
 RETURNING *;
 
--- name: DeleteProduct :one
+-- name: DeleteProduct :exec
 UPDATE products
 set deleted_at = $2,
     updated_at = $3
-WHERE id = $1
-RETURNING *;
+WHERE id = $1;

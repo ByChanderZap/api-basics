@@ -1,7 +1,6 @@
 package product
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -73,16 +72,16 @@ func (h *Handler) handleCreateProduct(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	img := sql.NullString{}
-	if payload.Image != "" {
-		img.Valid = true
-		img.String = payload.Image
-	}
+	// img := sql.NullString{}
+	// if payload.Image != "" {
+	// 	img.Valid = true
+	// 	img.String = payload.Image
+	// }
 	p, err := h.store.CreateProduct(r.Context(), CreateProductParams{
 		ID:          uuid.New(),
 		Name:        payload.Name,
 		Description: payload.Description,
-		Image:       img,
+		Image:       &payload.Image,
 		Price:       payload.Price,
 		Quantity:    int32(payload.Quantity),
 		CreatedAt:   time.Now(),
@@ -95,19 +94,19 @@ func (h *Handler) handleCreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := types.ProductResponse{
-		ID:          p.ID.String(),
-		Name:        p.Name,
-		Description: p.Description,
-		Image:       utils.NullableString(p.Image),
-		Price:       p.Price,
-		Quantity:    p.Quantity,
-		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
-		DeletedAt:   utils.NullableTime(p.DeletedAt),
-	}
+	// response := types.ProductResponse{
+	// 	ID:          p.ID.String(),
+	// 	Name:        p.Name,
+	// 	Description: p.Description,
+	// 	Image:       utils.NullableString(p.Image),
+	// 	Price:       p.Price,
+	// 	Quantity:    p.Quantity,
+	// 	CreatedAt:   p.CreatedAt,
+	// 	UpdatedAt:   p.UpdatedAt,
+	// 	DeletedAt:   utils.NullableTime(p.DeletedAt),
+	// }
 
-	utils.WriteJSON(w, http.StatusCreated, response)
+	utils.WriteJSON(w, http.StatusCreated, p)
 }
 
 func (h *Handler) handleGetProducts(w http.ResponseWriter, r *http.Request) {
@@ -118,22 +117,22 @@ func (h *Handler) handleGetProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []types.ProductResponse
-	for _, prod := range p {
-		response = append(response, types.ProductResponse{
-			ID:          prod.ID.String(),
-			Name:        prod.Name,
-			Description: prod.Description,
-			Image:       utils.NullableString(prod.Image),
-			Price:       prod.Price,
-			Quantity:    prod.Quantity,
-			CreatedAt:   prod.CreatedAt,
-			UpdatedAt:   prod.UpdatedAt,
-			DeletedAt:   utils.NullableTime(prod.DeletedAt),
-		})
-	}
+	// var response []types.ProductResponse
+	// for _, prod := range p {
+	// 	response = append(response, types.ProductResponse{
+	// 		ID:          prod.ID.String(),
+	// 		Name:        prod.Name,
+	// 		Description: prod.Description,
+	// 		Image:       utils.NullableString(prod.Image),
+	// 		Price:       prod.Price,
+	// 		Quantity:    prod.Quantity,
+	// 		CreatedAt:   prod.CreatedAt,
+	// 		UpdatedAt:   prod.UpdatedAt,
+	// 		DeletedAt:   utils.NullableTime(prod.DeletedAt),
+	// 	})
+	// }
 
-	utils.WriteJSON(w, http.StatusOK, response)
+	utils.WriteJSON(w, http.StatusOK, p)
 }
 
 func (h *Handler) handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
@@ -162,17 +161,17 @@ func (h *Handler) handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	img := sql.NullString{}
-	if payload.Image != "" {
-		img.Valid = true
-		img.String = payload.Image
-	}
+	// img := sql.NullString{}
+	// if payload.Image != "" {
+	// 	img.Valid = true
+	// 	img.String = payload.Image
+	// }
 
 	updated, err := h.store.UpdateProduct(r.Context(), UpdateProductParams{
 		ID:          parsedId,
 		Name:        payload.Name,
 		Description: payload.Description,
-		Image:       img,
+		Image:       &payload.Image,
 		Price:       payload.Price,
 		Quantity:    int32(payload.Quantity),
 		UpdatedAt:   time.Now(),
@@ -188,21 +187,21 @@ func (h *Handler) handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	toResponse := types.ProductResponse{
-		ID:          updated.ID.String(),
-		Name:        updated.Name,
-		Description: updated.Description,
-		Image:       utils.NullableString(updated.Image),
-		Price:       updated.Price,
-		Quantity:    updated.Quantity,
-		CreatedAt:   updated.CreatedAt,
-		UpdatedAt:   updated.UpdatedAt,
-		DeletedAt:   utils.NullableTime(updated.DeletedAt),
-	}
+	// toResponse := types.ProductResponse{
+	// 	ID:          updated.ID.String(),
+	// 	Name:        updated.Name,
+	// 	Description: updated.Description,
+	// 	Image:       utils.NullableString(updated.Image),
+	// 	Price:       updated.Price,
+	// 	Quantity:    updated.Quantity,
+	// 	CreatedAt:   updated.CreatedAt,
+	// 	UpdatedAt:   updated.UpdatedAt,
+	// 	DeletedAt:   utils.NullableTime(updated.DeletedAt),
+	// }
 
 	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"message": "product updated",
-		"product": toResponse,
+		"product": updated,
 	})
 }
 
@@ -212,10 +211,11 @@ func (h *Handler) handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 		log.Println("error parsing product id", err)
 		utils.RespondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid product id"))
 	}
-	_, err = h.store.DeleteProduct(r.Context(), DeleteProductParams{
+	timeNow := time.Now()
+	err = h.store.DeleteProduct(r.Context(), DeleteProductParams{
 		ID:        parsedId,
-		DeletedAt: sql.NullTime{Time: time.Now(), Valid: true},
-		UpdatedAt: time.Now(),
+		DeletedAt: &timeNow,
+		UpdatedAt: timeNow,
 	})
 
 	if err != nil {

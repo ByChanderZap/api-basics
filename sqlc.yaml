@@ -63,4 +63,9 @@ sql:
             go_type: "github.com/google/uuid.UUID"
           - db_type: "pg_catalog.timestamp"
             go_type: "time.Time"
+          - column: "products.deleted_at"
+            go_type: 
+              type: "time.Time"
+              pointer: true
+            go_struct_tag: 'json:"deleted_at,omitempty"'
           

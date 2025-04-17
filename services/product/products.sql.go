@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createProduct = `-- name: CreateProduct :one
@@ -56,47 +55,45 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	return i, err
 }
 
-const deleteProduct = `-- name: DeleteProduct :one
+const deleteProduct = `-- name: DeleteProduct :exec
 UPDATE products
 set deleted_at = $2,
     updated_at = $3
 WHERE id = $1
-RETURNING id, name, description, image, price, quantity, created_at, updated_at, deleted_at
 `
 
 type DeleteProductParams struct {
-	ID        uuid.UUID        `json:"id"`
-	DeletedAt pgtype.Timestamp `json:"deleted_at"`
-	UpdatedAt time.Time        `json:"updated_at"`
+	ID        uuid.UUID  `json:"id"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 
-func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) (Product, error) {
-	row := q.db.QueryRow(ctx, deleteProduct, arg.ID, arg.DeletedAt, arg.UpdatedAt)
-	var i Product
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Description,
-		&i.Image,
-		&i.Price,
-		&i.Quantity,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
+func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) error {
+	_, err := q.db.Exec(ctx, deleteProduct, arg.ID, arg.DeletedAt, arg.UpdatedAt)
+	return err
 }
 
 const getProduct = `-- name: GetProduct :one
-SELECT id, name, description, image, price, quantity, created_at, updated_at, deleted_at
+SELECT id, name, description, image, price, quantity, created_at, updated_at
 FROM products
 WHERE id = $1
 AND deleted_at IS NULL
 `
 
-func (q *Queries) GetProduct(ctx context.Context, id uuid.UUID) (Product, error) {
+type GetProductRow struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Image       *string   `json:"image"`
+	Price       float64   `json:"price"`
+	Quantity    int32     `json:"quantity"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (q *Queries) GetProduct(ctx context.Context, id uuid.UUID) (GetProductRow, error) {
 	row := q.db.QueryRow(ctx, getProduct, id)
-	var i Product
+	var i GetProductRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -106,27 +103,37 @@ func (q *Queries) GetProduct(ctx context.Context, id uuid.UUID) (Product, error)
 		&i.Quantity,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.DeletedAt,
 	)
 	return i, err
 }
 
 const getProducts = `-- name: GetProducts :many
-SELECT id, name, description, image, price, quantity, created_at, updated_at, deleted_at 
+SELECT id, name, description, image, price, quantity, created_at, updated_at
 FROM products
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 `
 
-func (q *Queries) GetProducts(ctx context.Context) ([]Product, error) {
+type GetProductsRow struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Image       *string   `json:"image"`
+	Price       float64   `json:"price"`
+	Quantity    int32     `json:"quantity"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (q *Queries) GetProducts(ctx context.Context) ([]GetProductsRow, error) {
 	rows, err := q.db.Query(ctx, getProducts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Product
+	var items []GetProductsRow
 	for rows.Next() {
-		var i Product
+		var i GetProductsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
@@ -136,7 +143,6 @@ func (q *Queries) GetProducts(ctx context.Context) ([]Product, error) {
 			&i.Quantity,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
