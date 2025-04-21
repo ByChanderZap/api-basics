@@ -2,9 +2,12 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/locales/en"
@@ -18,7 +21,43 @@ func ParseJson(r *http.Request, payload any) error {
 	if r.Body == nil {
 		return fmt.Errorf("missing request body")
 	}
-	return json.NewDecoder(r.Body).Decode(payload)
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(payload); err != nil {
+		var syntaxErr *json.SyntaxError
+		var unmarshalTypeErr *json.UnmarshalTypeError
+
+		switch {
+		case errors.As(err, &syntaxErr):
+			return fmt.Errorf("malformed JSON at position %d", syntaxErr.Offset)
+		case errors.As(err, &unmarshalTypeErr):
+			log.Println("unmarshal type error", unmarshalTypeErr.Value)
+			return fmt.Errorf("invalid value for field '%s', expected type '%s', received type '%s'",
+				unmarshalTypeErr.Field,
+				unmarshalTypeErr.Type,
+				unmarshalTypeErr.Value,
+			)
+		case errors.Is(err, io.EOF):
+			return fmt.Errorf("empty request body")
+		case strings.Contains(err.Error(), "json: unknown field"):
+			fieldName := extractUnknownFieldName(err.Error())
+			return fmt.Errorf("unknown field '%s' in request body", fieldName)
+		default:
+			return fmt.Errorf("invalid JSON payload")
+		}
+	}
+
+	return nil
+}
+
+func extractUnknownFieldName(errMsg string) string {
+	start := strings.Index(errMsg, "\"") + 1
+	end := strings.LastIndex(errMsg, "\"")
+	if start > 0 && end > start {
+		return errMsg[start:end]
+	}
+	return "unknown"
 }
 
 func WriteJSON(w http.ResponseWriter, status int, v interface{}) error {

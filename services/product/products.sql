@@ -4,7 +4,7 @@ FROM products
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC;
 
--- name: GetProduct :one
+-- name: GetProductById :one
 SELECT id, name, description, image, price, quantity, created_at, updated_at
 FROM products
 WHERE id = $1
@@ -31,3 +31,9 @@ UPDATE products
 set deleted_at = $2,
     updated_at = $3
 WHERE id = $1;
+
+-- name: GetProductsByIds :many
+SELECT id, name, description, image, price, quantity, created_at, updated_at
+FROM products
+WHERE id = ANY($1::uuid[])
+AND deleted_at IS NULL;

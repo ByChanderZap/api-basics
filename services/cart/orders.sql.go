@@ -3,31 +3,45 @@
 //   sqlc v1.28.0
 // source: orders.sql
 
-package order
+package cart
 
 import (
 	"context"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders (id, user_id, total, status, address, created_at, updated_at, deleted_at) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO orders (
+  id, 
+  user_id,
+  total,
+  status, 
+  address,
+  created_at,
+  updated_at
+) 
+VALUES (
+  $1,
+  $2,
+  $3,
+  $4,
+  $5,
+  $6,
+  $7
+)
 RETURNING id, user_id, total, status, address, created_at, updated_at, deleted_at
 `
 
 type CreateOrderParams struct {
-	ID        uuid.UUID        `json:"id"`
-	UserID    uuid.UUID        `json:"user_id"`
-	Total     float64          `json:"total"`
-	Status    OrderStatus      `json:"status"`
-	Address   string           `json:"address"`
-	CreatedAt time.Time        `json:"created_at"`
-	UpdatedAt time.Time        `json:"updated_at"`
-	DeletedAt pgtype.Timestamp `json:"deleted_at"`
+	ID        uuid.UUID   `json:"id"`
+	UserID    uuid.UUID   `json:"user_id"`
+	Total     float64     `json:"total"`
+	Status    OrderStatus `json:"status"`
+	Address   string      `json:"address"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
@@ -39,7 +53,6 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		arg.Address,
 		arg.CreatedAt,
 		arg.UpdatedAt,
-		arg.DeletedAt,
 	)
 	var i Order
 	err := row.Scan(
@@ -56,8 +69,20 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 }
 
 const createOrderItem = `-- name: CreateOrderItem :one
-INSERT INTO order_items (id, order_id, product_id, quantity, price) 
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO order_items(
+  id, 
+  order_id,
+  product_id,
+  quantity,
+  price
+) 
+VALUES (
+  $1,
+  $2,
+  $3,
+  $4,
+  $5
+)
 RETURNING id, order_id, product_id, quantity, price
 `
 

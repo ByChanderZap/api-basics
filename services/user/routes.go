@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ByChanderZap/api-basics/config"
 	"github.com/ByChanderZap/api-basics/services/auth"
 	"github.com/ByChanderZap/api-basics/types"
 	"github.com/ByChanderZap/api-basics/utils"
@@ -68,7 +67,7 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.CreateJWT(config.Envs.JWTSecret, u.ID.String())
+	token, err := auth.CreateJWT(u.ID.String())
 	if err != nil {
 		log.Println("Error creating token")
 		utils.RespondWithError(w, http.StatusInternalServerError, err)
@@ -110,15 +109,18 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	_, err := h.store.GetUserByEmail(r.Context(), payload.Email)
 	if err == nil {
+		log.Println("Email already exists")
 		utils.RespondWithError(w, http.StatusBadRequest, fmt.Errorf("user with email %s already exists", payload.Email))
 		return
-	} else if err != sql.ErrNoRows {
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		log.Println(err)
 		utils.RespondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	hashedPassword, err := auth.HashPassword(payload.Password)
 	if err != nil {
+		log.Println("Error hashing password")
 		utils.RespondWithError(w, http.StatusInternalServerError, fmt.Errorf("something went wrong"))
 		return
 	}

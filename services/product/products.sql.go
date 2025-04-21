@@ -73,14 +73,14 @@ func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) er
 	return err
 }
 
-const getProduct = `-- name: GetProduct :one
+const getProductById = `-- name: GetProductById :one
 SELECT id, name, description, image, price, quantity, created_at, updated_at
 FROM products
 WHERE id = $1
 AND deleted_at IS NULL
 `
 
-type GetProductRow struct {
+type GetProductByIdRow struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
@@ -91,9 +91,9 @@ type GetProductRow struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-func (q *Queries) GetProduct(ctx context.Context, id uuid.UUID) (GetProductRow, error) {
-	row := q.db.QueryRow(ctx, getProduct, id)
-	var i GetProductRow
+func (q *Queries) GetProductById(ctx context.Context, id uuid.UUID) (GetProductByIdRow, error) {
+	row := q.db.QueryRow(ctx, getProductById, id)
+	var i GetProductByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -134,6 +134,53 @@ func (q *Queries) GetProducts(ctx context.Context) ([]GetProductsRow, error) {
 	var items []GetProductsRow
 	for rows.Next() {
 		var i GetProductsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Image,
+			&i.Price,
+			&i.Quantity,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductsByIds = `-- name: GetProductsByIds :many
+SELECT id, name, description, image, price, quantity, created_at, updated_at
+FROM products
+WHERE id = ANY($1::uuid[])
+AND deleted_at IS NULL
+`
+
+type GetProductsByIdsRow struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Image       *string   `json:"image"`
+	Price       float64   `json:"price"`
+	Quantity    int32     `json:"quantity"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (q *Queries) GetProductsByIds(ctx context.Context, dollar_1 []uuid.UUID) ([]GetProductsByIdsRow, error) {
+	rows, err := q.db.Query(ctx, getProductsByIds, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductsByIdsRow
+	for rows.Next() {
+		var i GetProductsByIdsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,

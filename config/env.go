@@ -19,7 +19,7 @@ var Envs = initConfig()
 
 func initConfig() Config {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("Warning: .env file not found, using default or environment variables")
 	}
 	return Config{
 		DBUrl:                getEnv("DB_URL", "FUCK"),

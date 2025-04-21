@@ -38,7 +38,7 @@ func (h *Handler) handleGetProductById(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid product id"))
 		return
 	}
-	p, err := h.store.GetProduct(r.Context(), parsedId)
+	p, err := h.store.GetProductById(r.Context(), parsedId)
 	if err != nil {
 		log.Println("error getting product", err)
 		if strings.Contains(err.Error(), "no rows in result set") {

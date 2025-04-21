@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.28.0
 
-package order
+package cart
 
 import (
 	"database/sql/driver"
@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type OrderStatus string
@@ -57,14 +56,14 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 }
 
 type Order struct {
-	ID        uuid.UUID        `json:"id"`
-	UserID    uuid.UUID        `json:"user_id"`
-	Total     float64          `json:"total"`
-	Status    OrderStatus      `json:"status"`
-	Address   string           `json:"address"`
-	CreatedAt time.Time        `json:"created_at"`
-	UpdatedAt time.Time        `json:"updated_at"`
-	DeletedAt pgtype.Timestamp `json:"deleted_at"`
+	ID        uuid.UUID   `json:"id"`
+	UserID    uuid.UUID   `json:"user_id"`
+	Total     float64     `json:"total"`
+	Status    OrderStatus `json:"status"`
+	Address   string      `json:"address"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
+	DeletedAt *time.Time  `json:"deleted_at,omitempty"`
 }
 
 type OrderItem struct {

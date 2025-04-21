@@ -21,14 +21,14 @@ sql:
             go_type: "github.com/google/uuid.UUID"
           - db_type: "pg_catalog.timestamp"
             go_type: "time.Time"
-  - name: "order"
+  - name: "cart"
     schema: "cmd/migrate/migrations"
-    queries: "services/order/orders.sql"
+    queries: "services/cart/orders.sql"
     engine: "postgresql"
     gen:
       go:
-        package: "order"
-        out: "services/order"
+        package: "cart"
+        out: "services/cart"
         sql_package: "pgx/v5"
         emit_json_tags: true
         json_tags_case_style: "snake"
@@ -42,6 +42,11 @@ sql:
             go_type: "github.com/google/uuid.UUID"
           - db_type: "pg_catalog.timestamp"
             go_type: "time.Time"
+          - column: "orders.deleted_at"
+            go_type: 
+              type: "time.Time"
+              pointer: true
+            go_struct_tag: 'json:"deleted_at,omitempty"'
   - name: "product"
     schema: "cmd/migrate/migrations"
     queries: "services/product/products.sql"

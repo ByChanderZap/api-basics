@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ByChanderZap/api-basics/services/cart"
 	"github.com/ByChanderZap/api-basics/services/product"
 	"github.com/ByChanderZap/api-basics/services/user"
 	"github.com/ByChanderZap/api-basics/utils"
@@ -37,6 +38,11 @@ func (s *APIServer) Run() error {
 	productStore := product.New(s.db)
 	productHandler := product.NewHandler(productStore)
 	productHandler.RegisterRoutes(v1Router)
+
+	// Getting cartRoutes
+	cartStore := cart.New(s.db)
+	cartHandler := cart.NewHandler(cartStore, productStore)
+	cartHandler.RegisterRoutes(v1Router)
 
 	//	Mounting userRoutes v1Router to /api/v1
 	router.Mount("/api/v1", v1Router)
