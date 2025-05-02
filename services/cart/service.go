@@ -8,7 +8,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/ByChanderZap/api-basics/services/product"
+	cartStore "github.com/ByChanderZap/api-basics/services/cart/generated"
+	productStore "github.com/ByChanderZap/api-basics/services/product/generated"
 	"github.com/ByChanderZap/api-basics/types"
 	"github.com/google/uuid"
 )
@@ -47,7 +48,7 @@ func (h *Handler) createOrder(
 		return uuid.UUID{}, 0, fmt.Errorf("error getting products by ids")
 	}
 
-	prodMap := make(map[uuid.UUID]product.GetProductsByIdsRow)
+	prodMap := make(map[uuid.UUID]productStore.GetProductsByIdsRow)
 	for _, p := range ps {
 		prodMap[p.ID] = p
 	}
@@ -60,11 +61,11 @@ func (h *Handler) createOrder(
 
 	orderId := uuid.New()
 
-	order, err := orderTx.CreateOrder(context.Background(), CreateOrderParams{
+	order, err := orderTx.CreateOrder(context.Background(), cartStore.CreateOrderParams{
 		ID:        orderId,
 		UserID:    userId, //PLACE HOLDER
 		Total:     totalPrice,
-		Status:    OrderStatusPending,
+		Status:    cartStore.OrderStatusPending,
 		Address:   "",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -76,7 +77,7 @@ func (h *Handler) createOrder(
 	for _, item := range cartItems {
 		p := prodMap[item.ProductId]
 
-		_, err := orderTx.CreateOrderItem(context.Background(), CreateOrderItemParams{
+		_, err := orderTx.CreateOrderItem(context.Background(), cartStore.CreateOrderItemParams{
 			ID:        uuid.UUID{},
 			OrderID:   order.ID,
 			ProductID: p.ID,
@@ -87,7 +88,7 @@ func (h *Handler) createOrder(
 			return uuid.UUID{}, 0, err
 		}
 
-		_, err = prodTx.DecreaseProductStock(context.Background(), product.DecreaseProductStockParams{
+		_, err = prodTx.DecreaseProductStock(context.Background(), productStore.DecreaseProductStockParams{
 			ID:        p.ID,
 			Quantity:  p.Quantity,
 			UpdatedAt: time.Now(),
@@ -108,7 +109,7 @@ func (h *Handler) createOrder(
 	return order.ID, order.Total, nil
 }
 
-func checkIfCartIsInStock(cartItems []types.CartItem, products map[uuid.UUID]product.GetProductsByIdsRow) error {
+func checkIfCartIsInStock(cartItems []types.CartItem, products map[uuid.UUID]productStore.GetProductsByIdsRow) error {
 	if len(cartItems) == 0 {
 		return fmt.Errorf("cart is empty")
 	}
@@ -126,7 +127,7 @@ func checkIfCartIsInStock(cartItems []types.CartItem, products map[uuid.UUID]pro
 	return nil
 }
 
-func calculateTotalCartPrice(cartItems []types.CartItem, products map[uuid.UUID]product.GetProductsByIdsRow) float64 {
+func calculateTotalCartPrice(cartItems []types.CartItem, products map[uuid.UUID]productStore.GetProductsByIdsRow) float64 {
 	var total float64
 
 	for _, item := range cartItems {

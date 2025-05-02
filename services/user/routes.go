@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ByChanderZap/api-basics/services/auth"
+	userStore "github.com/ByChanderZap/api-basics/services/user/generated"
 	"github.com/ByChanderZap/api-basics/types"
 	"github.com/ByChanderZap/api-basics/utils"
 	"github.com/go-chi/chi/v5"
@@ -18,10 +19,10 @@ import (
 )
 
 type Handler struct {
-	store *Queries
+	store *userStore.Queries
 }
 
-func NewHandler(store *Queries) *Handler {
+func NewHandler(store *userStore.Queries) *Handler {
 	return &Handler{store: store}
 }
 
@@ -125,7 +126,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := h.store.CreateUser(r.Context(), CreateUserParams{
+	u, err := h.store.CreateUser(r.Context(), userStore.CreateUserParams{
 		ID:        uuid.New(),
 		FirstName: payload.FirstName,
 		LastName:  payload.LastName,

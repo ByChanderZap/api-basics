@@ -3,7 +3,7 @@
 //   sqlc v1.28.0
 // source: orders.sql
 
-package cart
+package cartStore
 
 import (
 	"context"

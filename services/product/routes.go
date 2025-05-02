@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	productStore "github.com/ByChanderZap/api-basics/services/product/generated"
 	"github.com/ByChanderZap/api-basics/types"
 	"github.com/ByChanderZap/api-basics/utils"
 	"github.com/go-chi/chi/v5"
@@ -16,10 +17,10 @@ import (
 )
 
 type Handler struct {
-	store Querier
+	store productStore.Queries
 }
 
-func NewHandler(store Querier) *Handler {
+func NewHandler(store productStore.Queries) *Handler {
 	return &Handler{store: store}
 }
 
@@ -77,7 +78,7 @@ func (h *Handler) handleCreateProduct(w http.ResponseWriter, r *http.Request) {
 	// 	img.Valid = true
 	// 	img.String = payload.Image
 	// }
-	p, err := h.store.CreateProduct(r.Context(), CreateProductParams{
+	p, err := h.store.CreateProduct(r.Context(), productStore.CreateProductParams{
 		ID:          uuid.New(),
 		Name:        payload.Name,
 		Description: payload.Description,
@@ -167,7 +168,7 @@ func (h *Handler) handleUpdateProduct(w http.ResponseWriter, r *http.Request) {
 	// 	img.String = payload.Image
 	// }
 
-	updated, err := h.store.UpdateProduct(r.Context(), UpdateProductParams{
+	updated, err := h.store.UpdateProduct(r.Context(), productStore.UpdateProductParams{
 		ID:          parsedId,
 		Name:        payload.Name,
 		Description: payload.Description,
@@ -212,7 +213,7 @@ func (h *Handler) handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid product id"))
 	}
 	timeNow := time.Now()
-	err = h.store.DeleteProduct(r.Context(), DeleteProductParams{
+	err = h.store.DeleteProduct(r.Context(), productStore.DeleteProductParams{
 		ID:        parsedId,
 		DeletedAt: &timeNow,
 		UpdatedAt: timeNow,
@@ -221,7 +222,7 @@ func (h *Handler) handleDeleteProduct(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error deleting product", err)
 		if strings.Contains(err.Error(), "no rows in result set") {
-			utils.RespondWithError(w, http.StatusNotFound, fmt.Errorf("Product with id %s not found", parsedId))
+			utils.RespondWithError(w, http.StatusNotFound, fmt.Errorf("product with id %s not found", parsedId))
 			return
 		}
 		utils.RespondWithError(w, http.StatusInternalServerError, errors.New("unable to delete product"))

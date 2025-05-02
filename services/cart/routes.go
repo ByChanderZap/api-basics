@@ -4,7 +4,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ByChanderZap/api-basics/services/product"
+	cartStore "github.com/ByChanderZap/api-basics/services/cart/generated"
+	productStore "github.com/ByChanderZap/api-basics/services/product/generated"
 	"github.com/ByChanderZap/api-basics/types"
 	"github.com/ByChanderZap/api-basics/utils"
 	"github.com/go-chi/chi/v5"
@@ -15,11 +16,11 @@ import (
 
 type Handler struct {
 	db           *pgxpool.Pool
-	orderStore   *Queries
-	productStore *product.Queries
+	orderStore   *cartStore.Queries
+	productStore *productStore.Queries
 }
 
-func NewHandler(db *pgxpool.Pool, store *Queries, productStore *product.Queries) *Handler {
+func NewHandler(db *pgxpool.Pool, store *cartStore.Queries, productStore *productStore.Queries) *Handler {
 	return &Handler{
 		db:           db,
 		orderStore:   store,

@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/ByChanderZap/api-basics/services/cart"
+	cartStore "github.com/ByChanderZap/api-basics/services/cart/generated"
 	"github.com/ByChanderZap/api-basics/services/product"
 	"github.com/ByChanderZap/api-basics/services/user"
+	userStore "github.com/ByChanderZap/api-basics/services/user/generated"
 	"github.com/ByChanderZap/api-basics/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -30,8 +32,8 @@ func (s *APIServer) Run() error {
 	v1Router := chi.NewRouter()
 
 	//	Getting userRoutes
-	userStore := user.New(s.db)
-	userHandler := user.NewHandler(userStore)
+	uStore := userStore.New(s.db)
+	userHandler := user.NewHandler(uStore)
 	userHandler.RegisterRoutes(v1Router)
 
 	//	Getting productRoutes
@@ -40,7 +42,7 @@ func (s *APIServer) Run() error {
 	productHandler.RegisterRoutes(v1Router)
 
 	// Getting cartRoutes
-	cartStore := cart.New(s.db)
+	cartStore := cartStore.New(s.db)
 	cartHandler := cart.NewHandler(s.db, cartStore, productStore)
 	cartHandler.RegisterRoutes(v1Router)
 

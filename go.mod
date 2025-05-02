@@ -24,6 +24,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect

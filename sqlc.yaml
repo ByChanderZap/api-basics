@@ -6,8 +6,8 @@ sql:
     engine: "postgresql"
     gen:
       go:
-        package: "user"
-        out: "services/user"
+        package: "userStore"
+        out: "services/user/generated"
         sql_package: "pgx/v5"
         emit_json_tags: true
         json_tags_case_style: "snake"
@@ -27,8 +27,8 @@ sql:
     engine: "postgresql"
     gen:
       go:
-        package: "cart"
-        out: "services/cart"
+        package: "cartStore"
+        out: "services/cart/generated"
         sql_package: "pgx/v5"
         emit_json_tags: true
         json_tags_case_style: "snake"
@@ -53,8 +53,8 @@ sql:
     engine: "postgresql"
     gen:
       go:
-        package: "product"
-        out: "services/product"
+        package: "productStore"
+        out: "services/product/generated"
         sql_package: "pgx/v5"
         emit_json_tags: true
         json_tags_case_style: "snake"
