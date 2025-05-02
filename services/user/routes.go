@@ -19,10 +19,10 @@ import (
 )
 
 type Handler struct {
-	store *userStore.Queries
+	store userStore.Querier
 }
 
-func NewHandler(store *userStore.Queries) *Handler {
+func NewHandler(store userStore.Querier) *Handler {
 	return &Handler{store: store}
 }
 
