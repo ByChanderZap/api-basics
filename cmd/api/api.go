@@ -7,6 +7,7 @@ import (
 	"github.com/ByChanderZap/api-basics/services/cart"
 	cartStore "github.com/ByChanderZap/api-basics/services/cart/generated"
 	"github.com/ByChanderZap/api-basics/services/product"
+	productStore "github.com/ByChanderZap/api-basics/services/product/generated"
 	"github.com/ByChanderZap/api-basics/services/user"
 	userStore "github.com/ByChanderZap/api-basics/services/user/generated"
 	"github.com/ByChanderZap/api-basics/utils"
@@ -37,13 +38,13 @@ func (s *APIServer) Run() error {
 	userHandler.RegisterRoutes(v1Router)
 
 	//	Getting productRoutes
-	productStore := product.New(s.db)
-	productHandler := product.NewHandler(productStore)
+	pStore := productStore.New(s.db)
+	productHandler := product.NewHandler(*pStore)
 	productHandler.RegisterRoutes(v1Router)
 
 	// Getting cartRoutes
 	cartStore := cartStore.New(s.db)
-	cartHandler := cart.NewHandler(s.db, cartStore, productStore)
+	cartHandler := cart.NewHandler(s.db, cartStore, pStore)
 	cartHandler.RegisterRoutes(v1Router)
 
 	//	Mounting userRoutes v1Router to /api/v1
