@@ -9,15 +9,19 @@ import (
 	"github.com/ByChanderZap/api-basics/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Handler struct {
-	orderStore   Querier
-	productStore product.Querier
+	db           *pgxpool.Pool
+	orderStore   *Queries
+	productStore *product.Queries
 }
 
-func NewHandler(store Querier, productStore product.Querier) *Handler {
+func NewHandler(db *pgxpool.Pool, store *Queries, productStore *product.Queries) *Handler {
 	return &Handler{
+		db:           db,
 		orderStore:   store,
 		productStore: productStore,
 	}
@@ -54,14 +58,16 @@ func (h *Handler) handleCheckout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get products
-	ps, err := h.productStore.GetProductsByIds(r.Context(), productIds)
+	orderId, totalPrice, err := h.createOrder(productIds, reqCart.Items, uuid.UUID{})
 	if err != nil {
-		log.Println("error getting products by ids", err)
-		utils.RespondWithError(w, http.StatusInternalServerError, err)
+		log.Println("error creating order", err)
+		utils.RespondWithError(w, http.StatusBadRequest, err)
 		return
 	}
+
 	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
-		"products": ps,
+		"message":     "order created",
+		"order_id":    orderId,
+		"total_price": totalPrice,
 	})
 }

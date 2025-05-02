@@ -41,7 +41,7 @@ func (s *APIServer) Run() error {
 
 	// Getting cartRoutes
 	cartStore := cart.New(s.db)
-	cartHandler := cart.NewHandler(cartStore, productStore)
+	cartHandler := cart.NewHandler(s.db, cartStore, productStore)
 	cartHandler.RegisterRoutes(v1Router)
 
 	//	Mounting userRoutes v1Router to /api/v1

@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
+	DecreaseProductStock(ctx context.Context, arg DecreaseProductStockParams) (DecreaseProductStockRow, error)
 	DeleteProduct(ctx context.Context, arg DeleteProductParams) error
 	GetProductById(ctx context.Context, id uuid.UUID) (GetProductByIdRow, error)
 	GetProducts(ctx context.Context) ([]GetProductsRow, error)

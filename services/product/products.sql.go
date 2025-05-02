@@ -55,6 +55,48 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	return i, err
 }
 
+const decreaseProductStock = `-- name: DecreaseProductStock :one
+UPDATE products
+SET quantity = quantity - $2,
+    updated_at = $3
+WHERE id = $1
+  AND deleted_at IS NULL
+RETURNING id, name, description, image, price, quantity, created_at, updated_at
+`
+
+type DecreaseProductStockParams struct {
+	ID        uuid.UUID `json:"id"`
+	Quantity  int32     `json:"quantity"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type DecreaseProductStockRow struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Image       *string   `json:"image"`
+	Price       float64   `json:"price"`
+	Quantity    int32     `json:"quantity"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func (q *Queries) DecreaseProductStock(ctx context.Context, arg DecreaseProductStockParams) (DecreaseProductStockRow, error) {
+	row := q.db.QueryRow(ctx, decreaseProductStock, arg.ID, arg.Quantity, arg.UpdatedAt)
+	var i DecreaseProductStockRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Image,
+		&i.Price,
+		&i.Quantity,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const deleteProduct = `-- name: DeleteProduct :exec
 UPDATE products
 set deleted_at = $2,

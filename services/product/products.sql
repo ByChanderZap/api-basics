@@ -37,3 +37,11 @@ SELECT id, name, description, image, price, quantity, created_at, updated_at
 FROM products
 WHERE id = ANY($1::uuid[])
 AND deleted_at IS NULL;
+
+-- name: DecreaseProductStock :one
+UPDATE products
+SET quantity = quantity - $2,
+    updated_at = $3
+WHERE id = $1
+  AND deleted_at IS NULL
+RETURNING id, name, description, image, price, quantity, created_at, updated_at;
