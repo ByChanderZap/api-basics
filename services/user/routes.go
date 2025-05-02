@@ -18,10 +18,10 @@ import (
 )
 
 type Handler struct {
-	store Querier
+	store *Queries
 }
 
-func NewHandler(store Querier) *Handler {
+func NewHandler(store *Queries) *Handler {
 	return &Handler{store: store}
 }
 
