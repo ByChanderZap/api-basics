@@ -28,7 +28,7 @@ func getCartItemsIds(items []types.CartItem) ([]uuid.UUID, error) {
 }
 
 func (h *Handler) createOrder(
-	productsIds []uuid.UUID,
+	productsIds []uuid.UUID, // cart items ids
 	cartItems []types.CartItem,
 	userId uuid.UUID,
 ) (uuid.UUID, float64, error) {
@@ -42,10 +42,10 @@ func (h *Handler) createOrder(
 	orderTx := h.orderStore.WithTx(tx)
 	prodTx := h.productStore.WithTx(tx)
 
-	ps, err := prodTx.GetProductsByIds(context.Background(), productsIds)
+	ps, err := prodTx.GetProductsByIds(context.Background(), productsIds) // database products
 	if err != nil {
 		log.Println("error getting products by ids", err)
-		return uuid.UUID{}, 0, fmt.Errorf("error getting products by ids")
+		return uuid.Nil, 0, fmt.Errorf("error getting products by ids")
 	}
 
 	prodMap := make(map[uuid.UUID]productStore.GetProductsByIdsRow)
@@ -54,7 +54,7 @@ func (h *Handler) createOrder(
 	}
 
 	if err := checkIfCartIsInStock(cartItems, prodMap); err != nil {
-		return uuid.UUID{}, 0, err
+		return uuid.Nil, 0, err
 	}
 
 	totalPrice := calculateTotalCartPrice(cartItems, prodMap)
@@ -63,7 +63,7 @@ func (h *Handler) createOrder(
 
 	order, err := orderTx.CreateOrder(context.Background(), cartStore.CreateOrderParams{
 		ID:        orderId,
-		UserID:    userId, //PLACE HOLDER
+		UserID:    userId,
 		Total:     totalPrice,
 		Status:    cartStore.OrderStatusPending,
 		Address:   "",
@@ -71,39 +71,39 @@ func (h *Handler) createOrder(
 		UpdatedAt: time.Now(),
 	})
 	if err != nil {
-		return uuid.UUID{}, 0, err
+		return uuid.Nil, 0, err
 	}
 
 	for _, item := range cartItems {
 		p := prodMap[item.ProductId]
-
+		log.Println("item", item)
 		_, err := orderTx.CreateOrderItem(context.Background(), cartStore.CreateOrderItemParams{
-			ID:        uuid.UUID{},
+			ID:        uuid.New(),
 			OrderID:   order.ID,
 			ProductID: p.ID,
-			Quantity:  p.Quantity,
-			Price:     p.Price * float64(p.Quantity),
+			Quantity:  int32(item.Quantity),
+			Price:     p.Price * float64(item.Quantity),
 		})
 		if err != nil {
-			return uuid.UUID{}, 0, err
+			return uuid.Nil, 0, err
 		}
 
 		_, err = prodTx.DecreaseProductStock(context.Background(), productStore.DecreaseProductStockParams{
 			ID:        p.ID,
-			Quantity:  p.Quantity,
+			Quantity:  int32(item.Quantity),
 			UpdatedAt: time.Now(),
 		})
 		if errors.Is(err, sql.ErrNoRows) {
-			return uuid.UUID{}, 0, fmt.Errorf("product %v is out of stock or already updated", p.ID)
+			return uuid.Nil, 0, fmt.Errorf("product %v is out of stock or already updated", p.ID)
 		}
 		if err != nil {
-			return uuid.UUID{}, 0, fmt.Errorf("failed to decrease stock for product %v: %w", p.ID, err)
+			return uuid.Nil, 0, fmt.Errorf("failed to decrease stock for product %v: %w", p.ID, err)
 		}
 	}
 
 	if err := tx.Commit(context.Background()); err != nil {
 		log.Println("something went wrong while committing the transaction", err)
-		return uuid.UUID{}, 0, fmt.Errorf("something went wrong while processing the order")
+		return uuid.Nil, 0, fmt.Errorf("something went wrong while processing the order")
 	}
 
 	return order.ID, order.Total, nil
@@ -132,8 +132,7 @@ func calculateTotalCartPrice(cartItems []types.CartItem, products map[uuid.UUID]
 
 	for _, item := range cartItems {
 		prod := products[item.ProductId]
-		total += prod.Price * float64(prod.Quantity)
+		total += prod.Price * float64(item.Quantity)
 	}
-
 	return total
 }

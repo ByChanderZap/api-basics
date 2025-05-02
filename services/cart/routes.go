@@ -4,13 +4,13 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ByChanderZap/api-basics/services/auth"
 	cartStore "github.com/ByChanderZap/api-basics/services/cart/generated"
 	productStore "github.com/ByChanderZap/api-basics/services/product/generated"
 	"github.com/ByChanderZap/api-basics/types"
 	"github.com/ByChanderZap/api-basics/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -29,7 +29,7 @@ func NewHandler(db *pgxpool.Pool, store *cartStore.Queries, productStore *produc
 }
 
 func (h *Handler) RegisterRoutes(router *chi.Mux) {
-	router.Post("/cart/checkout", h.handleCheckout)
+	router.Post("/cart/checkout", auth.WithJWTAuth(h.handleCheckout))
 }
 
 func (h *Handler) handleCheckout(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +59,12 @@ func (h *Handler) handleCheckout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orderId, totalPrice, err := h.createOrder(productIds, reqCart.Items, uuid.UUID{})
+	userId, err := auth.GetUserIdFromContext(r.Context())
+	if err != nil {
+		utils.RespondWithError(w, http.StatusUnauthorized, err)
+	}
+
+	orderId, totalPrice, err := h.createOrder(productIds, reqCart.Items, userId)
 	if err != nil {
 		log.Println("error creating order", err)
 		utils.RespondWithError(w, http.StatusBadRequest, err)
